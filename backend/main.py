@@ -83,12 +83,12 @@ app.include_router(webhook.router, prefix="/api/v1", tags=["webhooks"])
 
 # Prometheus metrics endpoint
 registry = CollectorRegistry()
-PROCESS_COLLECTOR.registrar(registry)
-PLATFORM_COLLECTOR.registrar(registry)
+PROCESS_COLLECTOR(registry=registry)
+PLATFORM_COLLECTOR(registry=registry)
 
 @app.get("/metrics")
 def metrics() -> Response:
-    data = generate_latest()
+    data = generate_latest(registry)
     return Response(content=data, media_type=CONTENT_TYPE_LATEST)
 
 if __name__ == "__main__":
