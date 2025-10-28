@@ -27,8 +27,9 @@ async def init_db():
     """Initialize database connection"""
     try:
         async with engine.begin() as conn:
-            # Test connection
-            await conn.execute("SELECT 1")
+            # Test connection using a text clause compatible with SQLAlchemy 2.0
+            from sqlalchemy import text
+            await conn.execute(text("SELECT 1"))
         logger.info("Database connection established")
     except Exception as e:
         logger.error("Failed to connect to database", error=str(e))
