@@ -202,6 +202,22 @@ services:
       - chatbot-network
     restart: unless-stopped
 
+  # ClickHouse for Langfuse analytics store
+  clickhouse:
+    image: clickhouse/clickhouse-server:latest
+    container_name: social-chatbot-clickhouse
+    environment:
+      - CLICKHOUSE_DB=langfuse
+      - CLICKHOUSE_DEFAULT_ACCESS_MANAGEMENT=1
+    volumes:
+      - clickhouse_data:/var/lib/clickhouse
+    ports:
+      - "8123:8123"   # HTTP
+      - "9000:9000"   # Native
+    networks:
+      - chatbot-network
+    restart: unless-stopped
+
   # Langfuse LLM Observability
   langfuse:
     image: langfuse/langfuse:latest
@@ -211,12 +227,14 @@ services:
       - NEXTAUTH_SECRET=${NEXTAUTH_SECRET:-langfuse_secret_123}
       - NEXTAUTH_URL=http://localhost:3002
       - SALT=${LANGFUSE_SALT:-langfuse_salt_123}
+      - CLICKHOUSE_URL=http://clickhouse:8123
     ports:
       - "3002:3000"
     networks:
       - chatbot-network
     depends_on:
       - postgres
+      - clickhouse
     restart: unless-stopped
 
   # Node Exporter for System Metrics
@@ -266,6 +284,7 @@ volumes:
   grafana_data:
   loki_data:
   uptime_data:
+  clickhouse_data:
 
 networks:
   chatbot-network:
