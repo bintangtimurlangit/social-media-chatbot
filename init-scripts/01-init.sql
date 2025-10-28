@@ -12,7 +12,7 @@ CREATE TABLE IF NOT EXISTS kb_entries (
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
-CREATE TABLE IF NOT EXISTS variables (
+CREATE TABLE IF NOT EXISTS chatbot_variables (
     key VARCHAR(255) PRIMARY KEY,
     value TEXT,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
@@ -47,7 +47,7 @@ CREATE INDEX IF NOT EXISTS idx_kb_entries_status ON kb_entries(status);
 CREATE INDEX IF NOT EXISTS idx_sessions_last_active ON sessions(last_active_at);
 
 -- Insert default variables
-INSERT INTO variables (key, value) VALUES 
+INSERT INTO chatbot_variables (key, value) VALUES 
     ('store_name', 'ACME Shop'),
     ('ig_handle', '@acme_shop'),
     ('whatsapp_number', '+1234567890')
