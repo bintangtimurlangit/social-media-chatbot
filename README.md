@@ -17,7 +17,7 @@ A multi-platform social media chatbot with RAG capabilities for Instagram DMs an
 
 1. **Clone the repository**
    ```bash
-   git clone https://github.com/yourusername/social-media-chatbot.git
+   git clone https://github.com/bintangtimurlangit/social-media-chatbot.git
    cd social-media-chatbot
    ```
 
