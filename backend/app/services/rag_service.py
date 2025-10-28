@@ -22,7 +22,7 @@ class RAGService:
             embedding = await self._generate_embedding(query)
             
             # Semantic search in Qdrant
-            semantic_results = await self._semantic_search(embedding, language)
+            semantic_results = self._semantic_search(embedding, language)
             
             # Lexical search in PostgreSQL (if available)
             lexical_results = await self._lexical_search(query, language)
@@ -78,7 +78,7 @@ class RAGService:
         hash_bytes = hash_obj.digest()
         return [float(b) / 255.0 for b in hash_bytes[:16]] + [0.0] * 368  # Pad to 384 dimensions
 
-    async def _semantic_search(self, embedding: List[float], language: str) -> List[Dict[str, Any]]:
+    def _semantic_search(self, embedding: List[float], language: str) -> List[Dict[str, Any]]:
         """Perform semantic search in Qdrant"""
         try:
             search_result = self.qdrant.search(

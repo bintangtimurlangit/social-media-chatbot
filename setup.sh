@@ -1,7 +1,11 @@
 #!/bin/bash
 
+# Source the banner
+source ./branding/banner.sh
+
 # Social Media Chatbot Setup Script
-echo "Setting up Social Media Chatbot..."
+print_banner
+echo "Setting up Social Media Chatbot by Astrals Agency..."
 
 # Preflight checks
 echo "Running preflight checks..."

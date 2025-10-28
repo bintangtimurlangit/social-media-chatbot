@@ -36,7 +36,7 @@ logger = structlog.get_logger()
 async def lifespan(app: FastAPI):
     """Application lifespan events"""
     # Startup
-    logger.info("Starting Social Media Chatbot by Astrals")
+    logger.info("Starting Social Media Chatbot by Astrals Agency")
     
     # Initialize database
     await init_db()
@@ -53,12 +53,12 @@ async def lifespan(app: FastAPI):
     yield
     
     # Shutdown
-    logger.info("Shutting down Social Media Chatbot Backend")
+    logger.info("Shutting down Social Media Chatbot Backend by Astrals Agency")
 
 # Create FastAPI app
 app = FastAPI(
     title="Social Media Chatbot API",
-    description="Backend API for Instagram and WhatsApp chatbot created by Astrals",
+    description="Backend API for Instagram and WhatsApp chatbot by Astrals Agency",
     version="1.0.0",
     lifespan=lifespan
 )

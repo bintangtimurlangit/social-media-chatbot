@@ -1,6 +1,10 @@
 #!/bin/bash
 
+# Source the banner
+source ./branding/banner.sh
+
 # Container Health Check Script
+print_compact_banner
 echo "Checking container health..."
 
 # Function to check if container is running
@@ -49,6 +53,8 @@ containers=(
     "social-chatbot-langfuse"
     "social-chatbot-node-exporter"
     "social-chatbot-cadvisor"
+    "social-chatbot-postgres-exporter"
+    "social-chatbot-redis-exporter"
 )
 
 echo "Container Status:"
