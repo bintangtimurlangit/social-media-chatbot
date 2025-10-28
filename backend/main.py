@@ -82,13 +82,9 @@ app.include_router(knowledge_base.router, prefix="/api/v1", tags=["knowledge-bas
 app.include_router(webhook.router, prefix="/api/v1", tags=["webhooks"])
 
 # Prometheus metrics endpoint
-registry = CollectorRegistry()
-PROCESS_COLLECTOR(registry=registry)
-PLATFORM_COLLECTOR(registry=registry)
-
 @app.get("/metrics")
 def metrics() -> Response:
-    data = generate_latest(registry)
+    data = generate_latest()
     return Response(content=data, media_type=CONTENT_TYPE_LATEST)
 
 if __name__ == "__main__":
