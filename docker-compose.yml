@@ -1,0 +1,272 @@
+version: '3.8'
+
+services:
+  # PostgreSQL Database
+  postgres:
+    image: postgres:15
+    container_name: social-chatbot-postgres
+    environment:
+      POSTGRES_DB: chatbot
+      POSTGRES_USER: chatbot_user
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-secure_password_123}
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./init-scripts:/docker-entrypoint-initdb.d
+    ports:
+      - "5432:5432"
+    networks:
+      - chatbot-network
+    restart: unless-stopped
+
+  # Qdrant Vector Database
+  qdrant:
+    image: qdrant/qdrant:latest
+    container_name: social-chatbot-qdrant
+    environment:
+      QDRANT__SERVICE__HTTP_PORT: 6333
+      QDRANT__SERVICE__GRPC_PORT: 6334
+    volumes:
+      - qdrant_data:/qdrant/storage
+    ports:
+      - "6333:6333"
+      - "6334:6334"
+    networks:
+      - chatbot-network
+    restart: unless-stopped
+
+  # Redis Cache & Sessions
+  redis:
+    image: redis:7-alpine
+    container_name: social-chatbot-redis
+    command: redis-server --appendonly yes --requirepass ${REDIS_PASSWORD:-redis_password_123}
+    volumes:
+      - redis_data:/data
+    ports:
+      - "6379:6379"
+    networks:
+      - chatbot-network
+    restart: unless-stopped
+
+  # n8n Workflow Automation
+  n8n:
+    image: n8nio/n8n:latest
+    container_name: social-chatbot-n8n
+    environment:
+      - N8N_BASIC_AUTH_ACTIVE=true
+      - N8N_BASIC_AUTH_USER=${N8N_USER:-admin}
+      - N8N_BASIC_AUTH_PASSWORD=${N8N_PASSWORD:-admin_password_123}
+      - N8N_HOST=${N8N_HOST:-localhost}
+      - N8N_PORT=5678
+      - N8N_PROTOCOL=https
+      - WEBHOOK_URL=https://${N8N_HOST}
+      - GENERIC_TIMEZONE=UTC
+      - DB_TYPE=postgresdb
+      - DB_POSTGRESDB_HOST=postgres
+      - DB_POSTGRESDB_PORT=5432
+      - DB_POSTGRESDB_DATABASE=chatbot
+      - DB_POSTGRESDB_USER=chatbot_user
+      - DB_POSTGRESDB_PASSWORD=${POSTGRES_PASSWORD:-secure_password_123}
+    volumes:
+      - n8n_data:/home/node/.n8n
+    ports:
+      - "5678:5678"
+    networks:
+      - chatbot-network
+    depends_on:
+      - postgres
+    restart: unless-stopped
+
+  # FastAPI Backend Service
+  backend:
+    build: ./backend
+    container_name: social-chatbot-backend
+    environment:
+      - DATABASE_URL=postgresql://chatbot_user:${POSTGRES_PASSWORD:-secure_password_123}@postgres:5432/chatbot
+      - REDIS_URL=redis://:${REDIS_PASSWORD:-redis_password_123}@redis:6379
+      - QDRANT_URL=http://qdrant:6333
+      - DEEPSEEK_API_KEY=${DEEPSEEK_API_KEY}
+      - OPENAI_API_KEY=${OPENAI_API_KEY}
+      - LANGFUSE_PUBLIC_KEY=${LANGFUSE_PUBLIC_KEY}
+      - LANGFUSE_SECRET_KEY=${LANGFUSE_SECRET_KEY}
+      - LANGFUSE_HOST=${LANGFUSE_HOST:-http://langfuse:3000}
+    ports:
+      - "8000:8000"
+    networks:
+      - chatbot-network
+    depends_on:
+      - postgres
+      - redis
+      - qdrant
+    restart: unless-stopped
+
+  # Prometheus Metrics Collection
+  prometheus:
+    image: prom/prometheus:latest
+    container_name: social-chatbot-prometheus
+    command:
+      - '--config.file=/etc/prometheus/prometheus.yml'
+      - '--storage.tsdb.path=/prometheus'
+      - '--web.console.libraries=/etc/prometheus/console_libraries'
+      - '--web.console.templates=/etc/prometheus/consoles'
+      - '--storage.tsdb.retention.time=200h'
+      - '--web.enable-lifecycle'
+    volumes:
+      - ./monitoring/prometheus:/etc/prometheus
+      - prometheus_data:/prometheus
+    ports:
+      - "9090:9090"
+    networks:
+      - chatbot-network
+    restart: unless-stopped
+  
+  # Postgres Exporter
+  postgres-exporter:
+    image: prometheuscommunity/postgres-exporter:latest
+    container_name: social-chatbot-postgres-exporter
+    environment:
+      - DATA_SOURCE_NAME=postgresql://chatbot_user:${POSTGRES_PASSWORD:-secure_password_123}@postgres:5432/chatbot?sslmode=disable
+    networks:
+      - chatbot-network
+    depends_on:
+      - postgres
+    restart: unless-stopped
+
+  # Redis Exporter
+  redis-exporter:
+    image: oliver006/redis_exporter:latest
+    container_name: social-chatbot-redis-exporter
+    command: ["--redis.addr=redis://redis:6379", "--redis.password=${REDIS_PASSWORD:-redis_password_123}"]
+    networks:
+      - chatbot-network
+    depends_on:
+      - redis
+    restart: unless-stopped
+
+  # Grafana Dashboards
+  grafana:
+    image: grafana/grafana:latest
+    container_name: social-chatbot-grafana
+    environment:
+      - GF_SECURITY_ADMIN_PASSWORD=${GRAFANA_PASSWORD:-admin_password_123}
+      - GF_USERS_ALLOW_SIGN_UP=false
+    volumes:
+      - grafana_data:/var/lib/grafana
+      - ./monitoring/grafana/provisioning:/etc/grafana/provisioning
+      - ./monitoring/grafana/dashboards:/var/lib/grafana/dashboards
+    ports:
+      - "3000:3000"
+    networks:
+      - chatbot-network
+    depends_on:
+      - prometheus
+    restart: unless-stopped
+
+  # Loki Log Aggregation
+  loki:
+    image: grafana/loki:latest
+    container_name: social-chatbot-loki
+    command: -config.file=/etc/loki/local-config.yaml
+    volumes:
+      - ./monitoring/loki:/etc/loki
+      - loki_data:/loki
+    ports:
+      - "3100:3100"
+    networks:
+      - chatbot-network
+    restart: unless-stopped
+
+  # Promtail Log Collection
+  promtail:
+    image: grafana/promtail:latest
+    container_name: social-chatbot-promtail
+    volumes:
+      - ./monitoring/promtail:/etc/promtail
+      - /var/log:/var/log:ro
+      - /var/lib/docker/containers:/var/lib/docker/containers:ro
+    command: -config.file=/etc/promtail/config.yml
+    networks:
+      - chatbot-network
+    depends_on:
+      - loki
+    restart: unless-stopped
+
+  # Uptime Kuma Health Monitoring
+  uptime-kuma:
+    image: louislam/uptime-kuma:latest
+    container_name: social-chatbot-uptime
+    volumes:
+      - uptime_data:/app/data
+    ports:
+      - "3001:3001"
+    networks:
+      - chatbot-network
+    restart: unless-stopped
+
+  # Langfuse LLM Observability
+  langfuse:
+    image: langfuse/langfuse:latest
+    container_name: social-chatbot-langfuse
+    environment:
+      - DATABASE_URL=postgresql://chatbot_user:${POSTGRES_PASSWORD:-secure_password_123}@postgres:5432/chatbot
+      - NEXTAUTH_SECRET=${NEXTAUTH_SECRET:-langfuse_secret_123}
+      - NEXTAUTH_URL=http://localhost:3002
+      - SALT=${LANGFUSE_SALT:-langfuse_salt_123}
+    ports:
+      - "3002:3000"
+    networks:
+      - chatbot-network
+    depends_on:
+      - postgres
+    restart: unless-stopped
+
+  # Node Exporter for System Metrics
+  node-exporter:
+    image: prom/node-exporter:latest
+    container_name: social-chatbot-node-exporter
+    volumes:
+      - /proc:/host/proc:ro
+      - /sys:/host/sys:ro
+      - /:/rootfs:ro
+    command:
+      - '--path.procfs=/host/proc'
+      - '--path.rootfs=/rootfs'
+      - '--path.sysfs=/host/sys'
+      - '--collector.filesystem.mount-points-exclude=^/(sys|proc|dev|host|etc)($$|/)'
+    ports:
+      - "9100:9100"
+    networks:
+      - chatbot-network
+    restart: unless-stopped
+
+  # cAdvisor Container Metrics
+  cadvisor:
+    image: gcr.io/cadvisor/cadvisor:latest
+    container_name: social-chatbot-cadvisor
+    privileged: true
+    devices:
+      - /dev/kmsg
+    volumes:
+      - /:/rootfs:ro
+      - /var/run:/var/run:ro
+      - /sys:/sys:ro
+      - /var/lib/docker:/var/lib/docker:ro
+      - /cgroup:/cgroup:ro
+    ports:
+      - "8080:8080"
+    networks:
+      - chatbot-network
+    restart: unless-stopped
+
+volumes:
+  postgres_data:
+  qdrant_data:
+  redis_data:
+  n8n_data:
+  prometheus_data:
+  grafana_data:
+  loki_data:
+  uptime_data:
+
+networks:
+  chatbot-network:
+    driver: bridge
