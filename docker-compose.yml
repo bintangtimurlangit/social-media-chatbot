@@ -202,12 +202,11 @@ services:
       - chatbot-network
     restart: unless-stopped
 
-  # ClickHouse for Langfuse analytics store
+  # ClickHouse for monitoring stack (kept)
   clickhouse:
     image: clickhouse/clickhouse-server:latest
     container_name: social-chatbot-clickhouse
     environment:
-      - CLICKHOUSE_DB=langfuse
       - CLICKHOUSE_DEFAULT_ACCESS_MANAGEMENT=1
     volumes:
       - clickhouse_data:/var/lib/clickhouse
@@ -218,23 +217,54 @@ services:
       - chatbot-network
     restart: unless-stopped
 
+  # Dedicated Postgres for Langfuse (isolated)
+  langfuse-postgres:
+    image: postgres:15
+    container_name: social-chatbot-langfuse-postgres
+    environment:
+      POSTGRES_DB: langfuse
+      POSTGRES_USER: langfuse
+      POSTGRES_PASSWORD: ${LANGFUSE_PG_PASSWORD:-lf_pg_password_123}
+    volumes:
+      - langfuse_postgres_data:/var/lib/postgresql/data
+    networks:
+      - chatbot-network
+    restart: unless-stopped
+
+  # Dedicated ClickHouse for Langfuse (isolated)
+  langfuse-clickhouse:
+    image: clickhouse/clickhouse-server:latest
+    container_name: social-chatbot-langfuse-clickhouse
+    environment:
+      - CLICKHOUSE_DEFAULT_ACCESS_MANAGEMENT=1
+    volumes:
+      - langfuse_clickhouse_data:/var/lib/clickhouse
+    networks:
+      - chatbot-network
+    restart: unless-stopped
+
   # Langfuse LLM Observability
   langfuse:
     image: langfuse/langfuse:latest
     container_name: social-chatbot-langfuse
     environment:
-      - DATABASE_URL=postgresql://chatbot_user:${POSTGRES_PASSWORD:-secure_password_123}@postgres:5432/chatbot
+      - DATABASE_URL=postgresql://langfuse:${LANGFUSE_PG_PASSWORD:-lf_pg_password_123}@langfuse-postgres:5432/langfuse
       - NEXTAUTH_SECRET=${NEXTAUTH_SECRET:-langfuse_secret_123}
       - NEXTAUTH_URL=http://localhost:3002
       - SALT=${LANGFUSE_SALT:-langfuse_salt_123}
-      - CLICKHOUSE_URL=http://clickhouse:8123
+      - CLICKHOUSE_URL=${CLICKHOUSE_URL}
+      - CLICKHOUSE_DB=${CLICKHOUSE_DB}
+      - CLICKHOUSE_USER=${CLICKHOUSE_USER}
+      - CLICKHOUSE_PASSWORD=${CLICKHOUSE_PASSWORD}
+      - CLICKHOUSE_MIGRATION_URL=${CLICKHOUSE_MIGRATION_URL}
+      - CLICKHOUSE_CLUSTER_ENABLED=${CLICKHOUSE_CLUSTER_ENABLED}
     ports:
       - "3002:3000"
     networks:
       - chatbot-network
     depends_on:
-      - postgres
-      - clickhouse
+      - langfuse-postgres
+      - langfuse-clickhouse
     restart: unless-stopped
 
   # Node Exporter for System Metrics
@@ -285,6 +315,8 @@ volumes:
   loki_data:
   uptime_data:
   clickhouse_data:
+  langfuse_postgres_data:
+  langfuse_clickhouse_data:
 
 networks:
   chatbot-network:
