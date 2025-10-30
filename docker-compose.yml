@@ -20,7 +20,7 @@ services:
 
   # Qdrant Vector Database
   qdrant:
-    image: qdrant/qdrant:latest
+    image: qdrant/qdrant:v1.7.3
     container_name: social-chatbot-qdrant
     environment:
       QDRANT__SERVICE__HTTP_PORT: 6333

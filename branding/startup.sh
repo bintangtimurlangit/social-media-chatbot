@@ -5,7 +5,7 @@ source ./branding/banner.sh
 
 print_banner
 
-echo "🚀 Welcome to Astrals Agency Social Media Chatbot Platform!"
+echo "Welcome to Astrals Agency Social Media Chatbot Platform."
 echo ""
 echo "This platform provides:"
 echo "  • Instagram & WhatsApp integration"
@@ -27,5 +27,5 @@ echo "  • LLM Observability: http://localhost:3002"
 echo "  • Backend API: http://localhost:8000"
 echo "  • Prometheus Metrics: http://localhost:9090"
 echo ""
-echo "Ready to revolutionize customer engagement! 🌟"
+echo "Ready to revolutionize customer engagement."
 echo ""

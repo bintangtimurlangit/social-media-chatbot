@@ -3,22 +3,16 @@
 # Astrals Agency Banner
 print_banner() {
     echo ""
+    # Print logo from logo.txt
+    local script_dir
+    script_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+    if [ -f "$script_dir/logo.txt" ]; then
+        cat "$script_dir/logo.txt"
+    fi
+    echo ""
     echo "    ╔══════════════════════════════════════════════════════════════╗"
-    echo "    ║                                                              ║"
-    echo "    ║    █████╗ ████████╗███████╗██████╗  █████╗ ██╗     ███████╗  ║"
-    echo "    ║   ██╔══██╗╚══██╔══╝██╔════╝██╔══██╗██╔══██╗██║     ██╔════╝  ║"
-    echo "    ║   ███████║   ██║   █████╗  ██████╔╝███████║██║     ███████╗  ║"
-    echo "    ║   ██╔══██║   ██║   ██╔══╝  ██╔══██╗██╔══██║██║     ╚════██║  ║"
-    echo "    ║   ██║  ██║   ██║   ███████╗██║  ██║██║  ██║███████╗███████║  ║"
-    echo "    ║   ╚═╝  ╚═╝   ╚═╝   ╚══════╝╚═╝  ╚═╝╚═╝  ╚═╝╚══════╝╚══════╝  ║"
-    echo "    ║                                                              ║"
-    echo "    ║                    ╔═══════════════════════╗                 ║"
-    echo "    ║                    ║    ASTRALS AGENCY     ║                 ║"
-    echo "    ║                    ║   Social Media AI     ║                 ║"
-    echo "    ║                    ╚═══════════════════════╝                 ║"
-    echo "    ║                                                              ║"
-    echo "    ║  🚀 Building the future of customer engagement through AI   ║"
-    echo "    ║                                                              ║"
+    echo "    ║                    ASTRALS AGENCY                           ║"
+    echo "    ║                 Social Media AI Platform                    ║"
     echo "    ╚══════════════════════════════════════════════════════════════╝"
     echo ""
 }
@@ -26,23 +20,13 @@ print_banner() {
 # Compact version for smaller displays
 print_compact_banner() {
     echo ""
-    echo "    ╔══════════════════════════════════════════════════════════════╗"
-    echo "    ║                                                              ║"
-    echo "    ║    █████╗ ████████╗███████╗██████╗  █████╗ ██╗     ███████╗  ║"
-    echo "    ║   ██╔══██╗╚══██╔══╝██╔════╝██╔══██╗██╔══██╗██║     ██╔════╝  ║"
-    echo "    ║   ███████║   ██║   █████╗  ██████╔╝███████║██║     ███████╗  ║"
-    echo "    ║   ██╔══██║   ██║   ██╔══╝  ██╔══██╗██╔══██║██║     ╚════██║  ║"
-    echo "    ║   ██║  ██║   ██║   ███████╗██║  ██║██║  ██║███████╗███████║  ║"
-    echo "    ║   ╚═╝  ╚═╝   ╚═╝   ╚══════╝╚═╝  ╚═╝╚═╝  ╚═╝╚══════╝╚══════╝  ║"
-    echo "    ║                                                              ║"
-    echo "    ║                    ╔═══════════════════════╗                 ║"
-    echo "    ║                    ║    ASTRALS AGENCY     ║                 ║"
-    echo "    ║                    ║   Social Media AI     ║                 ║"
-    echo "    ║                    ╚═══════════════════════╝                 ║"
-    echo "    ║                                                              ║"
-    echo "    ║  🚀 Building the future of customer engagement through AI   ║"
-    echo "    ║                                                              ║"
-    echo "    ╚══════════════════════════════════════════════════════════════╝"
+    local script_dir
+    script_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+    if [ -f "$script_dir/logo.txt" ]; then
+        cat "$script_dir/logo.txt"
+        echo ""
+    fi
+    echo "ASTRALS AGENCY — Social Media AI Platform"
     echo ""
 }
 
